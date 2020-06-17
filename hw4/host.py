@@ -148,7 +148,11 @@ while(1):
 
     print(mesg)
 
-    s.write("/getAcc/run\r".encode())
+    s.write("/query/run\r".encode())
+
+    char = s.read(3)
+
+    #print(char.decode())
 
     time.sleep(1)
 

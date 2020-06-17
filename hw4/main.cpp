@@ -70,7 +70,9 @@ EventQueue queue(32 * EVENTS_EVENT_SIZE);
 Thread t;
 
 
-void getAcc(Arguments *in, Reply *out);
+void getAcc(void);
+
+void query(Arguments *in, Reply *out);
 
 void xbee_rx_interrupt(void);
 
@@ -80,7 +82,7 @@ void reply_messange(char *xbee_reply, char *messange);
 
 void check_addr(char *xbee_reply, char *messenger);
 
-RPCFunction rpcAcc(&getAcc, "getAcc");
+RPCFunction rpcAcc(&query, "query");///////////////////
 
 
 int main(){
@@ -173,6 +175,8 @@ int main(){
   // Setup a serial interrupt function of receiving data from xbee
 
   xbee.attach(xbee_rx_interrupt, Serial::RxIrq);
+
+  queue.call_every(500, getAcc);
 
 }
 
@@ -270,7 +274,7 @@ void check_addr(char *xbee_reply, char *messenger){
 
 }
 
-void getAcc(Arguments *in, Reply *out) {
+void getAcc(void) {
 
    int16_t acc16;
 
@@ -320,6 +324,9 @@ void getAcc(Arguments *in, Reply *out) {
 
 }
 
+void query(Arguments *in, Reply *out) {
+  xbee.printf("ATCN\r\n");
+}
 
 void FXOS8700CQ_readRegs(int addr, uint8_t * data, int len) {
 
