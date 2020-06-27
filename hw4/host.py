@@ -38,6 +38,7 @@ def on_unsubscribe(mosq, obj, mid, granted_qos):
     print("Unsubscribed OK")
 
 
+
 # Set callbacks
 
 mqttc.on_message = on_message
@@ -140,21 +141,107 @@ print(char.decode())
 print("start sending RPC")
 ####################################################
 
-while(1):
 
-    mesg = "Hello, world!"
+def readchar():
+    acc = ""
+    read = 1
+    while read:
+
+        while(s.readable()):
+
+            char=s.read(1)
+
+            acc += char.decode()
+            
+            if (acc == "\r"):
+                print("rrr")
+            if char.decode() == "\n" or char.decode() == "\r":
+                read = 0
+                break
+    print("acc: "+acc)
+    return acc
+
+    
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+tn = np.arange(0, 20, 1)
+t = np.arange(0, 20, 0.5)
+n = np.arange(0, 20, 1)
+x = np.arange(0, 20, 0.5)
+y = np.arange(0, 20, 0.5)
+z = np.arange(0, 20, 0.5)
+tilt = np.arange(0, 20, 0.5)
+
+for i in range(0, 20):
+
+    if i == 0:
+        print("i=0")
+        s.write("/query/run\r".encode())
+        readchar()
+        time.sleep(0.2)
+        print("i=0")
+
+    s.write("/query/run\r".encode())
+
+    print(">>>>>j=")
+    j = int(readchar())
+    n[i] = int(readchar())
+    x[2*i] = float(readchar())
+    y[2*i] = float(readchar())
+    z[2*i] = float(readchar())
+    x[2*i+1] = float(readchar())
+    y[2*i+1] = float(readchar())
+    z[2*i+1] = float(readchar())
+    print("<<<<<j=")
+    j = int(readchar())
+
+    print("nnnnn")
+
+    time.sleep(0.3)
+
+s.close()
+
+
+for i in range(0, 40):
+    if z[i]<0 or z[i]*z[i]<0.5:
+        tilt[i] = 1
+    else:
+        tilt[i] = 0
+    
+    
+    
+    mesg = str(x[i])
 
     mqttc.publish(topic, mesg)
 
     print(mesg)
 
-    s.write("/query/run\r".encode())
+    mesg = str(y[i])
 
-    char = s.read(3)
+    mqttc.publish(topic, mesg)
 
-    #print(char.decode())
+    print(mesg)
 
-    time.sleep(1)
+    mesg = str(z[i])
+
+    mqttc.publish(topic, mesg)
+
+    print(mesg)
+
+    mesg = str(tilt[i])
+
+    mqttc.publish(topic, mesg)
+
+    print(mesg)
 
 
-s.close()
+
+plt.plot(tn,n)
+
+plt.xlabel('timestamp')
+
+plt.ylabel('number')
+
+plt.show()

@@ -2,8 +2,6 @@
 
 #include "mbed_rpc.h"
 
-#include "mbed.h"
-
 #include "mbed_rpc.h"
 
 #include "fsl_port.h"
@@ -83,6 +81,10 @@ void reply_messange(char *xbee_reply, char *messange);
 void check_addr(char *xbee_reply, char *messenger);
 
 RPCFunction rpcAcc(&query, "query");///////////////////
+
+volatile int n=-1;
+
+volatile float a[2][3]={0};
 
 
 int main(){
@@ -278,8 +280,6 @@ void getAcc(void) {
 
    int16_t acc16;
 
-   float t[3];
-
    uint8_t res[6];
 
    FXOS8700CQ_readRegs(FXOS8700Q_OUT_X_MSB, res, 6);
@@ -287,11 +287,15 @@ void getAcc(void) {
 
    acc16 = (res[0] << 6) | (res[1] >> 2);
 
+   a[0][0] = a[1][0];
+   a[0][1] = a[1][1];
+   a[0][2] = a[1][2];
+
    if (acc16 > UINT14_MAX/2)
 
       acc16 -= UINT14_MAX;
 
-   t[0] = ((float)acc16) / 4096.0f;
+   a[1][0] = ((float)acc16) / 4096.0f;
 
 
    acc16 = (res[2] << 6) | (res[3] >> 2);
@@ -300,7 +304,7 @@ void getAcc(void) {
 
       acc16 -= UINT14_MAX;
 
-   t[1] = ((float)acc16) / 4096.0f;
+   a[1][1] = ((float)acc16) / 4096.0f;
 
 
    acc16 = (res[4] << 6) | (res[5] >> 2);
@@ -309,23 +313,51 @@ void getAcc(void) {
 
       acc16 -= UINT14_MAX;
 
-   t[2] = ((float)acc16) / 4096.0f;
+   a[1][2] = ((float)acc16) / 4096.0f;
+
+   if(n>=0) n++;
 
 
    pc.printf("FXOS8700Q ACC: X=%1.4f(%x%x) Y=%1.4f(%x%x) Z=%1.4f(%x%x)",\
 
-         t[0], res[0], res[1],\
+         a[1][0], res[0], res[1],\
 
-         t[1], res[2], res[3],\
+         a[1][1], res[2], res[3],\
 
-         t[2], res[4], res[5]\
+         a[1][2], res[4], res[5]\
 
    );
 
 }
 
+volatile int j=0;/////
+
 void query(Arguments *in, Reply *out) {
-  xbee.printf("ATCN\r\n");
+  xbee.printf("%d\n", j);
+  if(n>5) n = 0;
+  if(n>=0){
+    xbee.printf("%d\n", n);
+  }
+  else{
+    xbee.printf("0\n");
+  }
+  wait(0.1);
+  xbee.printf("%1.4f\n", a[0][0]);
+  wait(0.1);
+  xbee.printf("%1.4f\n", a[0][1]);
+  wait(0.1);
+  xbee.printf("%1.4f\n", a[0][2]);
+  wait(0.1);
+  xbee.printf("%1.4f\n", a[1][0]);
+  wait(0.1);
+  xbee.printf("%1.4f\n", a[1][1]);
+  wait(0.1);
+  xbee.printf("%1.4f\n", a[1][2]);
+  wait(0.1);
+  xbee.printf("%d\n", j);
+  j++;
+  n=0;
+  pc.printf("\r\nquery!!!\r\n");
 }
 
 void FXOS8700CQ_readRegs(int addr, uint8_t * data, int len) {

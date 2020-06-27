@@ -2,6 +2,23 @@ import paho.mqtt.client as paho
 
 import time
 
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+
+s = -5
+
+print("t1")
+t = np.arange(0, 20, 0.5)
+x = np.arange(0, 20, 0.5)
+y = np.arange(0, 20, 0.5)
+z = np.arange(0, 20, 0.5)
+tilt = np.arange(0, 20, 0.5)
+print("t2")
+
+x[0] = 9.1
+x[4] = 9911.9911
 
 # https://os.mbed.com/teams/mqtt/wiki/Using-MQTT#python-client
 
@@ -28,8 +45,46 @@ def on_connect(self, mosq, obj, rc):
 
 
 def on_message(mosq, obj, msg):
+      global s, x, y, z, tilt
 
       print("[Received] Topic: " + msg.topic + ", Message: " + str(msg.payload) + "\n");
+
+
+      if s >= 0:
+            if s % 4 == 0:
+                  x[int(s/4)] = float(msg.payload)
+            elif s % 4 == 1:
+                  y[int(s/4)] = float(msg.payload)
+            elif s % 4 == 2:
+                  z[int(s/4)] = float(msg.payload)
+            else:
+                  tilt[int(s/4)] = float(msg.payload)
+
+      s+=1
+      print("s=",s)
+
+      if s == 160:
+            fig, ax = plt.subplots(2, 1)
+
+            ax[0].plot(t, x, color="red", linewidth=2.5, linestyle="-", label="x")
+
+            ax[0].plot(t, y, color="blue", linewidth=2.5, linestyle="-", label="y")
+
+            ax[0].plot(t, z, color="green", linewidth=2.5, linestyle="-", label="z")
+
+            ax[0].legend(loc='lower left', frameon=True)
+
+            ax[0].set_xlabel('Time')
+
+            ax[0].set_ylabel('Acc Vector')
+
+            ax[1].stem(t, tilt)
+
+            ax[1].set_xlabel('Time')
+
+            ax[1].set_ylabel('Tilt')
+
+            plt.show()
 
 
 def on_subscribe(mosq, obj, mid, granted_qos):
@@ -68,7 +123,8 @@ num = 0
 
 while num != 5:
 
-      ret = mqttc.publish(topic, "Message from Python!\n", qos=0)
+      #ret = mqttc.publish(topic, "Message from Python!\n", qos=0)
+      ret = mqttc.publish(topic, "ready", qos=0)
 
       if (ret[0] != 0):
 
@@ -76,9 +132,10 @@ while num != 5:
 
       mqttc.loop()
 
-      time.sleep(1.5)
+      time.sleep(0.5)
 
       num += 1
+
 
 
 # Loop forever, receiving messages
